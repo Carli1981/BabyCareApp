@@ -4,22 +4,69 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 
+const esCorreoValido = (email: string) => {
+  return /\S+@\S+\.\S+/.test(email);
+};
+
 export default function PantallaRegistro() {
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [confirmarContrasena, setConfirmarContrasena] = useState('');
+  const [mensajeError, setMensajeError] = useState('');
   const navigation = useNavigation();
 
   const registrarUsuario = async () => {
-    if (contrasena !== confirmarContrasena) {
-      Alert.alert('Error', 'Las contraseñas no coinciden');
+    console.log('registrarUsuario llamado');
+
+    setMensajeError('');
+
+    if (!correo || !contrasena || !confirmarContrasena) {
+      setMensajeError('Por favor completa todos los campos.');
+      Alert.alert('Error', 'Por favor completa todos los campos.');
       return;
     }
+
+    if (!esCorreoValido(correo)) {
+      setMensajeError('Formato de correo electrónico inválido.');
+      Alert.alert('Error', 'Formato de correo electrónico inválido.');
+      return;
+    }
+
+    if (contrasena !== confirmarContrasena) {
+      setMensajeError('Las contraseñas no coinciden.');
+      Alert.alert('Error', 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    if (contrasena.length < 6) {
+      setMensajeError('La contraseña debe tener al menos 6 caracteres.');
+      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
     try {
       await createUserWithEmailAndPassword(auth, correo, contrasena);
-      navigation.navigate('PantallaPrincipal' as never);
+      navigation.navigate('PreguntaNombre' as never);
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      let mensaje = 'Ocurrió un error al registrar el usuario.';
+
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          mensaje = 'Este correo ya está registrado.';
+          break;
+        case 'auth/invalid-email':
+          mensaje = 'El correo electrónico no es válido.';
+          break;
+        case 'auth/weak-password':
+          mensaje = 'La contraseña es demasiado débil. Usa al menos 6 caracteres.';
+          break;
+        default:
+          mensaje = `Error inesperado: ${error.message}`;
+          break;
+      }
+
+      setMensajeError(mensaje);
+      Alert.alert('Error', mensaje);
     }
   };
 
@@ -27,11 +74,32 @@ export default function PantallaRegistro() {
     <ImageBackground source={require('../assets/fondo.jpg')} style={styles.fondo} resizeMode="cover">
       <View style={styles.contenedor}>
         <Text style={styles.titulo}>Registro</Text>
-        <TextInput style={styles.entrada} placeholder="Correo electrónico" value={correo} onChangeText={setCorreo} keyboardType="email-address" />
-        <TextInput style={styles.entrada} placeholder="Contraseña" value={contrasena} onChangeText={setContrasena} secureTextEntry />
-        <TextInput style={styles.entrada} placeholder="Confirmar Contraseña" value={confirmarContrasena} onChangeText={setConfirmarContrasena} secureTextEntry />
+        <TextInput
+          style={styles.entrada}
+          placeholder="Correo electrónico"
+          value={correo}
+          onChangeText={setCorreo}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <TextInput
+          style={styles.entrada}
+          placeholder="Contraseña"
+          value={contrasena}
+          onChangeText={setContrasena}
+          secureTextEntry
+        />
+        <TextInput
+          style={styles.entrada}
+          placeholder="Confirmar Contraseña"
+          value={confirmarContrasena}
+          onChangeText={setConfirmarContrasena}
+          secureTextEntry
+        />
+        {mensajeError ? <Text style={styles.mensajeError}>{mensajeError}</Text> : null}
         <TouchableOpacity style={styles.boton} onPress={registrarUsuario}>
-          <Text style={styles.botonTexto}>Registrar</Text>
+          <Text style={styles.botonTexto}>Registrate</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('PantallaInicioSesion' as never)}>
           <Text style={styles.enlace}>¿Ya tienes cuenta? Inicia sesión</Text>
@@ -63,6 +131,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     backgroundColor: '#fff',
+  },
+  mensajeError: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
   boton: {
     backgroundColor: '#2196F3',

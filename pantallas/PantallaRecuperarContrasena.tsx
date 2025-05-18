@@ -9,12 +9,31 @@ export default function PantallaRecuperarContrasena() {
   const navigation = useNavigation();
 
   const recuperarContrasena = async () => {
+    if (!correo) {
+      Alert.alert('Error', 'Por favor ingresa tu correo electrónico.');
+      return;
+    }
+
     try {
       await sendPasswordResetEmail(auth, correo);
-      Alert.alert('Éxito', 'Se ha enviado un correo para restablecer tu contraseña');
+      Alert.alert('Éxito', 'Se ha enviado un correo para restablecer tu contraseña.');
       navigation.navigate('PantallaInicioSesion' as never);
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      let mensaje = 'No se pudo enviar el correo.';
+
+      switch (error.code) {
+        case 'auth/user-not-found':
+          mensaje = 'No existe una cuenta con ese correo electrónico.';
+          break;
+        case 'auth/invalid-email':
+          mensaje = 'Correo electrónico no válido.';
+          break;
+        default:
+          mensaje = `Error inesperado: ${error.message}`;
+          break;
+      }
+
+      Alert.alert('Error', mensaje);
     }
   };
 
@@ -22,7 +41,14 @@ export default function PantallaRecuperarContrasena() {
     <ImageBackground source={require('../assets/fondo.jpg')} style={styles.fondo} resizeMode="cover">
       <View style={styles.contenedor}>
         <Text style={styles.titulo}>Recuperar Contraseña</Text>
-        <TextInput style={styles.entrada} placeholder="Correo electrónico" value={correo} onChangeText={setCorreo} keyboardType="email-address" />
+        <TextInput
+          style={styles.entrada}
+          placeholder="Correo electrónico"
+          value={correo}
+          onChangeText={setCorreo}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
         <TouchableOpacity style={styles.boton} onPress={recuperarContrasena}>
           <Text style={styles.botonTexto}>Recuperar</Text>
         </TouchableOpacity>
