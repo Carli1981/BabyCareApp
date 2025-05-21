@@ -1,7 +1,12 @@
 // App.tsx
 import React from 'react';
 import Navegacion from './navegacion/navegacion';
+import { SuenoProvider } from './contextos/contextoSueno';
 
 export default function App() {
-  return <Navegacion />;
+  return (
+    <SuenoProvider>
+      <Navegacion />
+    </SuenoProvider>
+  );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Button, StyleSheet, ImageBackground } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const FondoPrincipal = require('../assets/FondoPantallaPrincipal.jpg'); // Cambia a tu fondo real
+const FondoPrincipal = require('../assets/FondoPantallaPrincipal.jpg');
 
 const PantallaPrincipal = () => {
   const navigation = useNavigation();
@@ -11,11 +11,17 @@ const PantallaPrincipal = () => {
     navigation.navigate('ResumenDatosBebe');
   };
 
+  const irActividades = () => {
+    navigation.navigate('PantallaActividades');
+  };
+
   return (
     <ImageBackground source={FondoPrincipal} style={styles.fondo}>
       <View style={styles.contenedor}>
         <Text style={styles.titulo}>Bienvenido a BabyCareApp</Text>
         <Button title="Perfil del bebé" onPress={irResumenDatos} />
+        <View style={{ height: 10 }} />
+        <Button title="Actividades" onPress={irActividades} />
       </View>
     </ImageBackground>
   );

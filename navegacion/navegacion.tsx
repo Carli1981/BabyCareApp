@@ -6,8 +6,8 @@ import PantallaInicioSesion from '../pantallas/PantallaInicioSesion';
 import PantallaRegistro from '../pantallas/PantallaRegistro';
 import PantallaPrincipal from '../pantallas/PantallaPrincipal';
 import PantallaRecuperarContrasena from '../pantallas/PantallaRecuperarContrasena';
+import PantallaActividades from '../pantallas/PantallaActividades'; // Importamos la nueva pantalla
 
-// 🆕 Importamos las pantallas de las preguntas del bebé
 import PreguntaNombre from '../pantallas/PreguntasBebe/PreguntaNombre';
 import PreguntaNacimiento from '../pantallas/PreguntasBebe/PreguntaNacimiento';
 import PreguntaSexo from '../pantallas/PreguntasBebe/PreguntaSexo';
@@ -17,8 +17,6 @@ import PreguntaFoto from '../pantallas/PreguntasBebe/PreguntaFoto';
 import PreguntaAlimentacion from '../pantallas/PreguntasBebe/PreguntaAlimentacion';
 import PreguntaNotificaciones from '../pantallas/PreguntasBebe/PreguntaNotificaciones';
 import ResumenDatosBebe from '../pantallas/PreguntasBebe/ResumenDatosBebe';
-
-// 🍼 Nueva pantalla para editar los datos del bebé
 import EditarDatosBebe from '../pantallas/EditarDatosBebe';
 
 const Stack = createStackNavigator();
@@ -31,8 +29,8 @@ const Navegacion = () => {
         <Stack.Screen name="PantallaRegistro" component={PantallaRegistro} options={{ title: 'Registro' }} />
         <Stack.Screen name="PantallaRecuperarContrasena" component={PantallaRecuperarContrasena} options={{ title: 'Recuperar Contraseña' }} />
         <Stack.Screen name="PantallaPrincipal" component={PantallaPrincipal} options={{ headerShown: false }} />
+        <Stack.Screen name="PantallaActividades" component={PantallaActividades} options={{ title: 'Actividades' }} />
 
-        {/* 🍼 Flujo de preguntas para nuevos usuarios */}
         <Stack.Screen name="PreguntaNombre" component={PreguntaNombre} options={{ headerShown: false }} />
         <Stack.Screen name="PreguntaNacimiento" component={PreguntaNacimiento} options={{ headerShown: false }} />
         <Stack.Screen name="PreguntaSexo" component={PreguntaSexo} options={{ headerShown: false }} />
@@ -42,9 +40,6 @@ const Navegacion = () => {
         <Stack.Screen name="PreguntaAlimentacion" component={PreguntaAlimentacion} options={{ headerShown: false }} />
         <Stack.Screen name="PreguntaNotificaciones" component={PreguntaNotificaciones} options={{ headerShown: false }} />
         <Stack.Screen name="ResumenDatosBebe" component={ResumenDatosBebe} />
-        
-
-        {/* 🍼 Nueva pantalla para editar los datos del bebé */}
         <Stack.Screen name="EditarDatosBebe" component={EditarDatosBebe} options={{ title: 'Editar Datos del Bebé' }} />
       </Stack.Navigator>
     </NavigationContainer>
