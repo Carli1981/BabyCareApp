@@ -6,7 +6,9 @@ import PantallaInicioSesion from '../pantallas/PantallaInicioSesion';
 import PantallaRegistro from '../pantallas/PantallaRegistro';
 import PantallaPrincipal from '../pantallas/PantallaPrincipal';
 import PantallaRecuperarContrasena from '../pantallas/PantallaRecuperarContrasena';
-import PantallaActividades from '../pantallas/PantallaActividades'; // Importamos la nueva pantalla
+import PantallaActividades from '../pantallas/PantallaActividades';
+import PantallaFiltros from '../pantallas/PantallaFiltros';
+import PantallaResultadosFiltros from '../pantallas/PantallaResultadosFiltros';
 
 import PreguntaNombre from '../pantallas/PreguntasBebe/PreguntaNombre';
 import PreguntaNacimiento from '../pantallas/PreguntasBebe/PreguntaNacimiento';
@@ -30,6 +32,8 @@ const Navegacion = () => {
         <Stack.Screen name="PantallaRecuperarContrasena" component={PantallaRecuperarContrasena} options={{ title: 'Recuperar Contraseña' }} />
         <Stack.Screen name="PantallaPrincipal" component={PantallaPrincipal} options={{ headerShown: false }} />
         <Stack.Screen name="PantallaActividades" component={PantallaActividades} options={{ title: 'Actividades' }} />
+        <Stack.Screen name="PantallaFiltros" component={PantallaFiltros} options={{ title: 'Filtrar Actividades' }} />
+        <Stack.Screen name="PantallaResultadosFiltros" component={PantallaResultadosFiltros} options={{ title: 'Resultados' }} />
 
         <Stack.Screen name="PreguntaNombre" component={PreguntaNombre} options={{ headerShown: false }} />
         <Stack.Screen name="PreguntaNacimiento" component={PreguntaNacimiento} options={{ headerShown: false }} />

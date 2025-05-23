@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   Modal,
   TextInput,
+  ImageBackground,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
@@ -17,12 +18,15 @@ import {
   eliminarActividad,
 } from '../servicios/actividadesService';
 import { useSueno } from '../contextos/contextoSueno';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const actividades = [
   { tipo: 'Pipí', icono: 'water' },
   { tipo: 'Evacuación', icono: 'emoticon-poop' },
   { tipo: 'Cambio de pañal', icono: 'baby-face-outline' },
   { tipo: 'Baño', icono: 'bathtub' },
+  { tipo: 'Dar pecho', icono: 'baby-bottle-outline' },
+  { tipo: 'Dar biberón', icono: 'bottle-soda-outline' },
 ];
 
 const PantallaActividades = () => {
@@ -30,41 +34,117 @@ const PantallaActividades = () => {
   const [comentario, setComentario] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [registroSeleccionado, setRegistroSeleccionado] = useState<any>(null);
-  const [tiempoActual, setTiempoActual] = useState(new Date());
   const [mostrarAyer, setMostrarAyer] = useState(false);
   const [mostrarOtros, setMostrarOtros] = useState(false);
-
+  const [modalBiberonVisible, setModalBiberonVisible] = useState(false);
+  const [mlBiberon, setMlBiberon] = useState('');
+  const [pechoActivo, setPechoActivo] = useState(false);
+  const [inicioPecho, setInicioPecho] = useState<Date | null>(null);
+  const [contador, setContador] = useState(0);
+  const [tiempoActual, setTiempoActual] = useState(new Date());
+  const [tiempoActualPecho, setTiempoActualPecho] = useState(new Date());
   const { suenoActivo, iniciarSueno, finalizarSueno, horaInicioSueno } = useSueno();
-  const intervaloRef = useRef<NodeJS.Timeout | null>(null);
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const filtros = route.params?.filtros;
 
   useEffect(() => {
     cargarActividades();
-  }, []);
+  }, [filtros]);
 
   useEffect(() => {
-    if (suenoActivo) {
-      const intervalo = setInterval(() => {
-        setTiempoActual(new Date());
-      }, 1000);
+  let intervalo: any;
+  if (suenoActivo || pechoActivo) {
+    intervalo = setInterval(() => {
+      setContador((prev) => prev + 1); // fuerza re-render
+    }, 1000);
+  }
+  return () => clearInterval(intervalo);
+}, [suenoActivo, pechoActivo]);
+
+useEffect(() => {
+  if (suenoActivo) {
+    const intervalo = setInterval(() => {
       setTiempoActual(new Date());
-      return () => clearInterval(intervalo);
-    }
-  }, [suenoActivo]);
+    }, 1000);
+    return () => clearInterval(intervalo);
+  }
+}, [suenoActivo]);
+
+useEffect(() => {
+  if (pechoActivo) {
+    const intervalo = setInterval(() => {
+      setTiempoActualPecho(new Date());
+    }, 1000);
+    return () => clearInterval(intervalo);
+  }
+}, [pechoActivo]);
 
   const cargarActividades = async () => {
-    const datos = await obtenerActividades();
+    let datos = await obtenerActividades();
+    if (filtros) {
+      datos = datos.filter((actividad: any) => {
+        const fecha = actividad.timestamp?.toDate?.() ?? new Date();
+        const cumpleTipo = filtros.tipo ? actividad.tipo === filtros.tipo : true;
+        const cumpleDesde = filtros.desde ? fecha >= new Date(filtros.desde) : true;
+        const cumpleHasta = filtros.hasta ? fecha <= new Date(filtros.hasta) : true;
+        return cumpleTipo && cumpleDesde && cumpleHasta;
+      });
+    } else {
+      const fechaLimite = new Date();
+      fechaLimite.setDate(fechaLimite.getDate() - 10);
+      datos = datos.filter((actividad: any) => {
+        const fecha = actividad.timestamp?.toDate?.() ?? new Date();
+        return fecha >= fechaLimite;
+      });
+    }
+
+    datos.sort((a, b) => (b.timestamp?.toDate?.()?.getTime() ?? 0) - (a.timestamp?.toDate?.()?.getTime() ?? 0));
     setRegistros(datos);
   };
 
-const manejarActividad = async (tipo: string) => {
-  const res = await registrarActividad(tipo, comentario);
-  if (!res || !res.success) {
-    alert('Error registrando actividad');
-    return;
-  }
-  await cargarActividades();
-};
+  const manejarActividad = async (tipo: string) => {
+    if (tipo === 'Dar biberón') {
+      setModalBiberonVisible(true);
+      return;
+    }
 
+    if (tipo === 'Dar pecho') {
+    if (pechoActivo) {
+    const fin = new Date();
+    if (inicioPecho) {
+      const duracionMs = fin.getTime() - inicioPecho.getTime();
+
+      const res = await registrarActividad('Dar pecho', '', {
+        timestampInicio: inicioPecho,
+        timestampFin: fin,
+        duracion: duracionMs,
+      });
+
+      if (!res?.success) {
+        alert('Error registrando actividad');
+        return;
+      }
+      setPechoActivo(false);
+      setInicioPecho(null);
+      await cargarActividades();
+      }
+    } else {
+      setInicioPecho(new Date());
+      setPechoActivo(true);
+    }
+      return;
+    }
+
+
+    const res = await registrarActividad(tipo, comentario);
+    if (!res?.success) {
+      alert('Error registrando actividad');
+      return;
+    }
+    setComentario('');
+    await cargarActividades();
+  };
 
   const abrirModalComentario = (registro: any) => {
     setRegistroSeleccionado(registro);
@@ -88,23 +168,82 @@ const manejarActividad = async (tipo: string) => {
   };
 
   const formatearDuracion = (milisegundos: number) => {
-    const horas = Math.floor(milisegundos / 3600000);
-    const minutos = Math.floor((milisegundos % 3600000) / 60000);
-    const segundos = Math.floor((milisegundos % 60000) / 1000);
-    return `${horas.toString().padStart(2, '0')}:${minutos
-      .toString()
-      .padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
+    const h = Math.floor(milisegundos / 3600000);
+    const m = Math.floor((milisegundos % 3600000) / 60000);
+    const s = Math.floor((milisegundos % 60000) / 1000);
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const renderRegistro = ({ item }: { item: any }) => {
+  const agruparPorFecha = () => {
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+
+    const grupos = { hoy: [], ayer: [], otros: [] } as { hoy: any[]; ayer: any[]; otros: any[] };
+
+    registros.forEach((registro) => {
+      const fecha = registro.timestamp?.toDate?.() ?? new Date();
+      const fechaSolo = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+      const hoySolo = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+      const ayerSolo = new Date(ayer.getFullYear(), ayer.getMonth(), ayer.getDate());
+
+      if (fechaSolo.getTime() === hoySolo.getTime()) grupos.hoy.push(registro);
+      else if (fechaSolo.getTime() === ayerSolo.getTime()) grupos.ayer.push(registro);
+      else grupos.otros.push(registro);
+    });
+
+    return grupos;
+  };
+
+  const formatoDuracion = () => {
+  if (!horaInicioSueno) return '00:00:00';
+  const duracionMs = tiempoActual.getTime() - new Date(horaInicioSueno).getTime();
+  return duracionMs < 0 || isNaN(duracionMs) ? '00:00:00' : formatearDuracion(duracionMs);
+  };
+
+  const formatoDuracionPecho = () => {
+  if (!inicioPecho) return '00:00:00';
+  const duracionMs = tiempoActualPecho.getTime() - inicioPecho.getTime();
+  return duracionMs < 0 || isNaN(duracionMs) ? '00:00:00' : formatearDuracion(duracionMs);
+  };
+
+
+  const confirmarBiberon = async () => {
+  if (!mlBiberon || isNaN(Number(mlBiberon))) {
+    alert('Por favor, ingresa una cantidad válida de ml.');
+    return;
+  }
+
+  const comentarioTexto = `Cantidad: ${mlBiberon.trim()} ml`;
+  const res = await registrarActividad('Dar biberón', comentarioTexto);
+
+  if (!res?.success) {
+    alert('Error registrando actividad');
+    return;
+  }
+
+  setMlBiberon('');
+  setModalBiberonVisible(false);
+  await cargarActividades();
+};
+
+
+  const renderRegistro = (item: any) => {
     const fecha = item.timestamp?.toDate?.() ?? new Date();
     const fechaStr = fecha.toLocaleDateString();
     const horaStr = fecha.toLocaleTimeString();
 
+    {item.tipo === 'Dar pecho' && item.timestampInicio && item.timestampFin && item.duracion && (
+    <Text style={[styles.textoComentario, { color: '#28a745' }]}>
+      👶 Inicio: {new Date(item.timestampInicio.toDate()).toLocaleTimeString()} - Fin: {new Date(item.timestampFin.toDate()).toLocaleTimeString()} ({formatearDuracion(item.duracion)})
+    </Text>
+)}
+
+
     return (
-      <View style={styles.registroItem}>
+      <View style={styles.registroItem} key={item.id}>
         <View style={styles.registroCabecera}>
-          <Text>📝 {item.tipo} - {fechaStr} {horaStr}</Text>
+          <Text style={styles.textoRegistro}>📝 {item.tipo} - {fechaStr} {horaStr}</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity onPress={() => abrirModalComentario(item)}>
               <MaterialCommunityIcons name="comment-edit-outline" size={20} color="#007BFF" />
@@ -114,123 +253,86 @@ const manejarActividad = async (tipo: string) => {
             </TouchableOpacity>
           </View>
         </View>
-
         {item.tipo === 'Sueño' && item.timestampInicio && item.timestampFin && item.duracion && (
-          <Text>
-            🛌 Fecha: {fechaStr} - Inicio: {new Date(item.timestampInicio.toDate()).toLocaleTimeString()} - Fin: {new Date(item.timestampFin.toDate()).toLocaleTimeString()} ({formatearDuracion(item.duracion)})
+          <Text style={styles.textoRegistro}>
+            🛌 Inicio: {new Date(item.timestampInicio.toDate()).toLocaleTimeString()} - Fin: {new Date(item.timestampFin.toDate()).toLocaleTimeString()} ({formatearDuracion(item.duracion)})
+          </Text>
+        )}
+        {item.tipo === 'Dar pecho' && item.comentario && (
+          <Text style={[styles.textoComentario, { color: '#28a745' }]}>🍼 {item.comentario}</Text>
+        )}
+        {item.tipo === 'Dar biberón' && (
+          <Text style={[styles.textoComentario, { color: '#7952B3' }]}>
+    🍼 {typeof item.comentario === 'string' && item.comentario.trim().length > 0 ? item.comentario : 'Sin datos de cantidad'}
           </Text>
         )}
 
-        {item.comentario && <Text>💬 {item.comentario}</Text>}
+        {item.tipo !== 'Dar biberón' && item.tipo !== 'Dar pecho' && item.comentario && (
+          <Text style={styles.textoComentario}>💬 {item.comentario}</Text>
+        )}
       </View>
     );
-  };
-
-  const agruparPorFecha = () => {
-    const hoy = new Date();
-    const ayer = new Date();
-    ayer.setDate(hoy.getDate() - 1);
-
-    const grupos: { hoy: any[]; ayer: any[]; otros: any[] } = { hoy: [], ayer: [], otros: [] };
-
-    [...registros]
-      .sort((a, b) => (b.timestamp?.toDate?.() ?? 0) - (a.timestamp?.toDate?.() ?? 0))
-      .forEach((registro) => {
-        const fecha = registro.timestamp?.toDate?.() ?? new Date();
-        const fechaSolo = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
-
-        const hoySolo = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-        const ayerSolo = new Date(ayer.getFullYear(), ayer.getMonth(), ayer.getDate());
-
-        if (fechaSolo.getTime() === hoySolo.getTime()) {
-          grupos.hoy.push(registro);
-        } else if (fechaSolo.getTime() === ayerSolo.getTime()) {
-          grupos.ayer.push(registro);
-        } else {
-          grupos.otros.push(registro);
-        }
-      });
-
-    return grupos;
-  };
-
-  const formatoDuracion = () => {
-    if (!horaInicioSueno) return '';
-    const ahora = tiempoActual.getTime();
-    const inicio = new Date(horaInicioSueno).getTime();
-    const duracionMs = ahora - inicio;
-    if (duracionMs < 0 || isNaN(duracionMs)) return '00:00:00';
-    return formatearDuracion(duracionMs);
   };
 
   const grupos = agruparPorFecha();
 
   return (
-    <ScrollView style={styles.contenedor}>
-      <Text style={styles.titulo}>Actividades del Bebé</Text>
+    <ImageBackground source={require('../assets/FondoPantallaActividades.jpg')} style={styles.fondo} resizeMode="cover">
+      <View style={styles.contenedorPrincipal}>
+        {/* Forzar re-render si el contador cambia */}
+      <Text style={{ display: 'none' }}>{contador}</Text>
+        <View style={styles.columnaIconos}>
+          <Text style={styles.titulo}>Actividades</Text>
 
-      {suenoActivo && (
-        <View>
-          <Text style={styles.cronometro}>
-            🛌 Durmiendo desde hace: {formatoDuracion()}
-          </Text>
-        </View>
-      )}
+          {actividades.map((act, idx) => (
+            <TouchableOpacity key={idx} style={styles.botonActividadColumna} onPress={() => manejarActividad(act.tipo)}>
+              <View style={styles.iconoContainer}>
+                <MaterialCommunityIcons name={act.icono as any} size={30} color="#fff" />
+              </View>
+              <Text style={styles.etiquetaIcono}>{act.tipo}</Text>
+            </TouchableOpacity>
+          ))}
 
-      <View style={styles.grid}>
-        {actividades.map((act, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.botonActividad}
-            onPress={() => manejarActividad(act.tipo)}
-          >
-            <View style={styles.iconoFondo}>
-              <MaterialCommunityIcons name={act.icono as any} size={30} color="#007BFF" />
+          <TouchableOpacity style={styles.botonActividadColumna} onPress={() => suenoActivo ? finalizarSueno(cargarActividades) : iniciarSueno()}>
+            <View style={[styles.iconoContainer, { backgroundColor: '#7952B3' }]}>
+              <MaterialCommunityIcons name="bed-outline" size={30} color="#fff" />
             </View>
-            <Text style={styles.textoActividad}>{act.tipo}</Text>
+            <Text style={styles.etiquetaIcono}>Sueño</Text>
           </TouchableOpacity>
-        ))}
 
-        <TouchableOpacity
-          style={styles.botonActividad}
-          onPress={() => suenoActivo ? finalizarSueno(cargarActividades) : iniciarSueno()}
-        >
-          <View style={[styles.iconoFondo, { backgroundColor: suenoActivo ? '#FFD3D3' : '#E0F7FF' }]}>
-            <MaterialCommunityIcons name="bed-outline" size={30} color="#007BFF" />
-          </View>
-          <Text style={styles.textoActividad}>{suenoActivo ? 'Despertar' : 'Sueño'}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={[styles.botonActividadColumna, { marginTop: 30 }]} onPress={() => navigation.navigate('PantallaFiltros')}>
+            <View style={[styles.iconoContainer, { backgroundColor: '#DC3545' }]}>
+              <MaterialCommunityIcons name="filter" size={30} color="#fff" />
+            </View>
+            <Text style={styles.etiquetaIcono}>Filtro para histórico</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.columnaRegistros}>
+          {suenoActivo && (
+            <Text style={styles.cronometro}>🛌 Durmiendo desde hace: {formatoDuracion()}</Text>
+          )}
+          {pechoActivo && (
+            <Text style={[styles.cronometro, { color: '#28a745' }]}>🍼 Dando pecho: {formatoDuracionPecho()}</Text>
+          )}
+          <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 30 }} showsVerticalScrollIndicator={true}>
+            <Text style={styles.seccionTitulo}>📅 Hoy</Text>
+            {grupos.hoy.map(renderRegistro)}
+
+            <TouchableOpacity onPress={() => setMostrarAyer(!mostrarAyer)}>
+              <Text style={styles.seccionTitulo}>📆 Ayer {mostrarAyer ? '🔽' : '▶️'}</Text>
+            </TouchableOpacity>
+            {mostrarAyer && grupos.ayer.map(renderRegistro)}
+
+            <TouchableOpacity onPress={() => setMostrarOtros(!mostrarOtros)}>
+              <Text style={styles.seccionTitulo}>🗓️ Otros días {mostrarOtros ? '🔽' : '▶️'}</Text>
+            </TouchableOpacity>
+            {mostrarOtros && grupos.otros.map(renderRegistro)}
+          </ScrollView>
+        </View>
       </View>
 
-      <Text style={styles.subtitulo}>Historial</Text>
-
-      {grupos.hoy.length > 0 && (
-        <>
-          <Text style={styles.seccionTitulo}>📅 Hoy</Text>
-          <FlatList data={grupos.hoy} renderItem={renderRegistro} keyExtractor={(item) => item.id} />
-        </>
-      )}
-
-      <Text style={styles.seccionTitulo} onPress={() => setMostrarAyer(!mostrarAyer)}>
-        📆 Ayer {mostrarAyer ? '🔽' : '▶️'}
-      </Text>
-      {mostrarAyer && (
-        <FlatList data={grupos.ayer} renderItem={renderRegistro} keyExtractor={(item) => item.id} />
-      )}
-
-      <Text style={styles.seccionTitulo} onPress={() => setMostrarOtros(!mostrarOtros)}>
-        🗓️ Otros días {mostrarOtros ? '🔽' : '▶️'}
-      </Text>
-      {mostrarOtros && (
-        <FlatList data={grupos.otros} renderItem={renderRegistro} keyExtractor={(item) => item.id} />
-      )}
-
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalFondo}>
           <View style={styles.modalContenido}>
             <Text style={styles.subtitulo}>Agregar comentario</Text>
@@ -239,110 +341,92 @@ const manejarActividad = async (tipo: string) => {
               placeholder="Escribe un comentario..."
               value={comentario}
               onChangeText={setComentario}
+              multiline
+              numberOfLines={3}
             />
             <TouchableOpacity style={styles.botonGuardar} onPress={guardarComentario}>
               <Text style={styles.textoBoton}>Guardar</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={[styles.botonGuardar, { backgroundColor: 'gray', marginTop: 10 }]} onPress={() => setModalVisible(false)}>
+              <Text style={styles.textoBoton}>Cancelar</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
-    </ScrollView>
+
+      <Modal visible={modalBiberonVisible} transparent animationType="slide" onRequestClose={() => setModalBiberonVisible(false)}>
+        <View style={styles.modalFondo}>
+          <View style={styles.modalContenido}>
+            <Text style={styles.subtitulo}>¿Cuántos ml se le dio?</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ingrese la cantidad en ml"
+              value={mlBiberon}
+              onChangeText={setMlBiberon}
+              keyboardType="numeric"
+            />
+            <TouchableOpacity style={styles.botonGuardar} onPress={confirmarBiberon}>
+              <Text style={styles.textoBoton}>Registrar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.botonGuardar, { backgroundColor: 'gray', marginTop: 10 }]} onPress={() => setModalBiberonVisible(false)}>
+              <Text style={styles.textoBoton}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  contenedor: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#F2F2F2',
-  },
-  titulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  botonActividad: {
-    width: 90,
-    height: 100,
-    margin: 8,
+  fondo: { flex: 1 },
+  contenedorPrincipal: { flex: 1, flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.9)' },
+  columnaIconos: {
+    width: 120,
+    backgroundColor: '#F2F6FC',
     alignItems: 'center',
+    paddingVertical: 20,
+    borderRightWidth: 1,
+    borderRightColor: '#ccc',
   },
-  iconoFondo: {
-    backgroundColor: '#E0F7FF',
-    padding: 15,
-    borderRadius: 50,
+  titulo: { fontSize: 16, marginBottom: 20, fontWeight: 'bold' },
+  botonActividadColumna: { marginVertical: 10, alignItems: 'center' },
+  etiquetaIcono: { fontSize: 12, textAlign: 'center', marginTop: 4 },
+  iconoContainer: {
+    backgroundColor: '#007BFF',
+    borderRadius: 25,
+    padding: 10,
+    marginBottom: 4,
   },
-  textoActividad: {
-    marginTop: 5,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  subtitulo: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginVertical: 10,
-  },
-  seccionTitulo: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 10,
-    marginBottom: 5,
+  columnaRegistros: { flex: 1, paddingHorizontal: 15, paddingVertical: 10 },
+  scroll: {
+    flex: 1,
+    ...(Platform.OS === 'web' && {
+      maxHeight: '80%',
+      overflowY: 'scroll',
+    }),
   },
   registroItem: {
-    padding: 10,
-    backgroundColor: '#E6F7FF',
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  registroCabecera: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  modalFondo: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContenido: {
     backgroundColor: '#fff',
-    borderRadius: 15,
-    padding: 20,
-    width: '80%',
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  input: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  botonGuardar: {
-    backgroundColor: '#007BFF',
-    padding: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  textoBoton: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  cronometro: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 10,
-    color: '#007BFF',
-  },
+  registroCabecera: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  textoRegistro: { fontSize: 14 },
+  textoComentario: { fontStyle: 'italic', color: '#555', marginTop: 4 },
+  seccionTitulo: { fontSize: 17, fontWeight: 'bold', marginVertical: 10, backgroundColor: '#e8f0fe', padding: 6, borderRadius: 6 },
+  cronometro: { fontSize: 16, fontWeight: 'bold', marginBottom: 10, color: '#007BFF' },
+  modalFondo: { flex: 1, backgroundColor: '#000000aa', justifyContent: 'center', paddingHorizontal: 20 },
+  modalContenido: { backgroundColor: 'white', padding: 20, borderRadius: 10 },
+  subtitulo: { fontSize: 18, marginBottom: 15, fontWeight: 'bold' },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, fontSize: 16, minHeight: 60, textAlignVertical: 'top' },
+  botonGuardar: { backgroundColor: '#007BFF', marginTop: 15, borderRadius: 8, paddingVertical: 12, alignItems: 'center' },
+  textoBoton: { color: 'white', fontWeight: 'bold', fontSize: 16 },
 });
 
 export default PantallaActividades;

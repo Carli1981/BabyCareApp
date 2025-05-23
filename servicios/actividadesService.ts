@@ -19,7 +19,7 @@ export const registrarActividad = async (tipo: string, comentario: string) => {
     const nuevaActividad = {
       tipo,
       timestamp: Timestamp.now(),
-      comentario: '',
+      comentario,
     };
 
     await addDoc(ref, nuevaActividad);
