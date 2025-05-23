@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ImageBackground, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  ImageBackground,
+  Alert,
+  TouchableOpacity
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-
 import { guardarDatoBebe } from '../../servicios/firestoreService';
 import { obtenerUIDUsuarioActual } from '../../servicios/authService';
+import { moderateScale, verticalScale } from '../../utils/responsive';
 
 const Fondo = require('../../assets/FondoPreguntas.jpg');
 
@@ -29,7 +38,7 @@ const PreguntaNombre = () => {
   };
 
   return (
-    <ImageBackground source={Fondo} style={styles.fondo}>
+    <ImageBackground source={Fondo} style={styles.fondo} resizeMode="cover">
       <View style={styles.contenedor}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.botonAtras}>
           <Text style={styles.textoAtras}>← Atrás</Text>
@@ -57,40 +66,39 @@ const PreguntaNombre = () => {
 const styles = StyleSheet.create({
   fondo: {
     flex: 1,
-    resizeMode: 'cover',
     justifyContent: 'center',
   },
   contenedor: {
-    padding: 20,
+    padding: moderateScale(20),
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    margin: 20,
-    borderRadius: 15,
+    margin: moderateScale(20),
+    borderRadius: moderateScale(15),
   },
   botonAtras: {
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
   },
   textoAtras: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     color: '#007AFF',
   },
   pregunta: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
     fontWeight: 'bold',
   },
   input: {
-    height: 40,
+    height: verticalScale(40),
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 20,
-    paddingHorizontal: 10,
-    fontSize: 16,
-    borderRadius: 5,
+    marginBottom: verticalScale(20),
+    paddingHorizontal: moderateScale(10),
+    fontSize: moderateScale(16),
+    borderRadius: moderateScale(5),
     backgroundColor: '#fff',
   },
   botonContainer: {
-    marginTop: 20,
+    marginTop: verticalScale(20),
   },
 });
 

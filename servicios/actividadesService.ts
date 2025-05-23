@@ -10,7 +10,15 @@ import {
 import { firestore } from '../firebaseConfig';
 import { obtenerUIDUsuarioActual } from './authService';
 
-export const registrarActividad = async (tipo: string, comentario: string) => {
+export const registrarActividad = async (
+  tipo: string,
+  comentario: string,
+  extraData: {
+    timestampInicio?: Timestamp;
+    timestampFin?: Timestamp;
+    duracion?: number;
+  } = {}
+) => {
   try {
     const uid = await obtenerUIDUsuarioActual();
     if (!uid) throw new Error('No hay usuario autenticado.');
@@ -20,6 +28,7 @@ export const registrarActividad = async (tipo: string, comentario: string) => {
       tipo,
       timestamp: Timestamp.now(),
       comentario,
+      ...extraData, // Aquí se incorporan los datos adicionales
     };
 
     await addDoc(ref, nuevaActividad);
@@ -30,6 +39,8 @@ export const registrarActividad = async (tipo: string, comentario: string) => {
     return { success: false };
   }
 };
+
+
 
 export const obtenerActividades = async () => {
   const uid = await obtenerUIDUsuarioActual();

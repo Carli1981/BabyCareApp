@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert, useWindowDimensions } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
 import { obtenerDatosBebe } from '../servicios/firestoreService';
+import { moderateScale, verticalScale, isTablet } from '../utils/responsive';
 
 const esCorreoValido = (correo: string): boolean => {
   const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,11 +16,11 @@ export default function PantallaInicioSesion() {
   const [contrasena, setContrasena] = useState('');
   const [mensajeError, setMensajeError] = useState('');
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
 
   const iniciarSesion = async () => {
-    console.log('iniciarSesion llamado'); // debug
+    console.log('iniciarSesion llamado'); 
 
-    // Limpio mensaje previo
     setMensajeError('');
 
     if (!correo || !contrasena) {
@@ -74,12 +75,12 @@ export default function PantallaInicioSesion() {
     }
   };
 
-  return (
+ return (
     <ImageBackground source={require('../assets/fondo.jpg')} style={styles.fondo} resizeMode="cover">
-      <View style={styles.contenedor}>
-        <Text style={styles.titulo}>Iniciar Sesión</Text>
+      <View style={[styles.contenedor, { margin: moderateScale(20), padding: moderateScale(20), borderRadius: moderateScale(20) }]}>
+        <Text style={[styles.titulo, { fontSize: moderateScale(26) }]}>Iniciar Sesión</Text>
         <TextInput
-          style={styles.entrada}
+          style={[styles.entrada, { height: verticalScale(45), borderRadius: moderateScale(8), paddingHorizontal: moderateScale(10) }]}
           placeholder="Correo electrónico"
           value={correo}
           onChangeText={setCorreo}
@@ -88,21 +89,21 @@ export default function PantallaInicioSesion() {
           autoCorrect={false}
         />
         <TextInput
-          style={styles.entrada}
+          style={[styles.entrada, { height: verticalScale(45), borderRadius: moderateScale(8), paddingHorizontal: moderateScale(10) }]}
           placeholder="Contraseña"
           value={contrasena}
           onChangeText={setContrasena}
           secureTextEntry
         />
-        {mensajeError ? <Text style={styles.mensajeError}>{mensajeError}</Text> : null}
-        <TouchableOpacity style={styles.boton} onPress={iniciarSesion}>
-          <Text style={styles.botonTexto}>Entrar</Text>
+        {mensajeError ? <Text style={[styles.mensajeError, { fontSize: moderateScale(14) }]}>{mensajeError}</Text> : null}
+        <TouchableOpacity style={[styles.boton, { paddingVertical: verticalScale(12), borderRadius: moderateScale(10), marginTop: moderateScale(10) }]} onPress={iniciarSesion}>
+          <Text style={[styles.botonTexto, { fontSize: moderateScale(16) }]}>Entrar</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('PantallaRegistro' as never)}>
-          <Text style={styles.enlace}>¿No tienes cuenta? Regístrate</Text>
+          <Text style={[styles.enlace, { marginTop: moderateScale(10), fontSize: moderateScale(14) }]}>¿No tienes cuenta? Regístrate</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('PantallaRecuperarContrasena' as never)}>
-          <Text style={styles.enlace}>¿Olvidaste tu contraseña?</Text>
+          <Text style={[styles.enlace, { marginTop: moderateScale(10), fontSize: moderateScale(14) }]}>¿Olvidaste tu contraseña?</Text>
         </TouchableOpacity>
       </View>
     </ImageBackground>
@@ -113,36 +114,26 @@ const styles = StyleSheet.create({
   fondo: { flex: 1, justifyContent: 'center' },
   contenedor: {
     backgroundColor: 'rgba(255,255,255,0.85)',
-    margin: 20,
-    padding: 20,
-    borderRadius: 20,
   },
   titulo: {
-    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: moderateScale(20),
     textAlign: 'center',
   },
   entrada: {
-    height: 45,
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    marginBottom: moderateScale(12),
     backgroundColor: '#fff',
   },
   mensajeError: {
     color: 'red',
-    marginBottom: 10,
+    marginBottom: moderateScale(10),
     textAlign: 'center',
     fontWeight: 'bold',
   },
   boton: {
     backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 10,
   },
   botonTexto: {
     color: 'white',
@@ -152,7 +143,6 @@ const styles = StyleSheet.create({
   enlace: {
     color: '#555',
     textAlign: 'center',
-    marginTop: 10,
     textDecorationLine: 'underline',
   },
 });

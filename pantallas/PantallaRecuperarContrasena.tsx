@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Alert,
+} from 'react-native';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
+
+import { scale, verticalScale, moderateScale } from '../utils/responsive';
 
 export default function PantallaRecuperarContrasena() {
   const [correo, setCorreo] = useState('');
@@ -38,7 +48,11 @@ export default function PantallaRecuperarContrasena() {
   };
 
   return (
-    <ImageBackground source={require('../assets/fondo.jpg')} style={styles.fondo} resizeMode="cover">
+    <ImageBackground
+      source={require('../assets/fondo.jpg')}
+      style={styles.fondo}
+      resizeMode="cover"
+    >
       <View style={styles.contenedor}>
         <Text style={styles.titulo}>Recuperar Contraseña</Text>
         <TextInput
@@ -58,37 +72,41 @@ export default function PantallaRecuperarContrasena() {
 }
 
 const styles = StyleSheet.create({
-  fondo: { flex: 1, justifyContent: 'center' },
+  fondo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   contenedor: {
     backgroundColor: 'rgba(255,255,255,0.85)',
-    margin: 20,
-    padding: 20,
-    borderRadius: 20,
+    margin: moderateScale(20),
+    padding: moderateScale(20),
+    borderRadius: moderateScale(20),
   },
   titulo: {
-    fontSize: 26,
+    fontSize: moderateScale(26),
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
     textAlign: 'center',
   },
   entrada: {
-    height: 45,
+    height: verticalScale(45),
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    marginBottom: verticalScale(12),
+    paddingHorizontal: moderateScale(10),
+    borderRadius: moderateScale(8),
     backgroundColor: '#fff',
   },
   boton: {
     backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 10,
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(10),
+    marginTop: verticalScale(10),
   },
   botonTexto: {
     color: 'white',
     textAlign: 'center',
     fontWeight: 'bold',
+    fontSize: moderateScale(16),
   },
 });

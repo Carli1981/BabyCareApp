@@ -7,12 +7,10 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import {
-  useNavigation,
-  CommonActions,
-} from '@react-navigation/native';
+import { useNavigation, CommonActions } from '@react-navigation/native';
 import { cerrarSesion, obtenerUIDUsuarioActual } from '../servicios/authService';
 import { obtenerDatosBebe } from '../servicios/firestoreService';
+import { moderateScale, verticalScale } from '../utils/responsive';
 
 const FondoPrincipal = require('../assets/FondoPantallaPrincipal.jpg');
 
@@ -87,53 +85,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 40,
-    paddingHorizontal: 20,
+    marginTop: verticalScale(40),
+    paddingHorizontal: moderateScale(20),
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: moderateScale(60),
+    height: moderateScale(60),
+    borderRadius: moderateScale(30),
     borderWidth: 2,
     borderColor: '#fff',
   },
   logoutButton: {
     backgroundColor: '#ff5c5c',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: moderateScale(12),
+    borderRadius: moderateScale(10),
   },
   logoutText: {
     color: 'white',
     fontWeight: 'bold',
+    fontSize: moderateScale(14),
   },
   contenedor: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    margin: 20,
-    borderRadius: 20,
-    padding: 20,
+    margin: moderateScale(20),
+    borderRadius: moderateScale(20),
+    padding: moderateScale(20),
   },
   titulo: {
-    fontSize: 28,
+    fontSize: moderateScale(28),
     fontWeight: 'bold',
-    marginBottom: 30,
+    marginBottom: verticalScale(30),
     textAlign: 'center',
   },
   boton: {
     backgroundColor: '#4aa3f0',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 12,
-    marginVertical: 10,
+    paddingVertical: verticalScale(15),
+    paddingHorizontal: moderateScale(30),
+    borderRadius: moderateScale(12),
+    marginVertical: verticalScale(10),
     width: '80%',
     alignItems: 'center',
   },
   botonTexto: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: moderateScale(18),
     fontWeight: '600',
   },
 });

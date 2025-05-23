@@ -13,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 
 import { guardarDatoBebe } from '../../servicios/firestoreService';
 import { obtenerUIDUsuarioActual } from '../../servicios/authService';
+import { moderateScale, verticalScale } from '../../utils/responsive';
 
 const Fondo = require('../../assets/FondoPreguntas.jpg');
 
@@ -42,13 +43,13 @@ const PreguntaPeso = () => {
   };
 
   return (
-    <ImageBackground source={Fondo} style={styles.fondo}>
+    <ImageBackground source={Fondo} style={styles.fondo} resizeMode="cover">
       <View style={styles.contenedor}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.botonAtras}>
           <Text style={styles.textoAtras}>← Atrás</Text>
         </TouchableOpacity>
 
-        <Text style={styles.pregunta}>¿Cuanto pesa tu bebé? (kg)</Text>
+        <Text style={styles.pregunta}>¿Cuánto pesa tu bebé? (kg)</Text>
         <TextInput
           style={styles.input}
           keyboardType="numeric"
@@ -63,29 +64,37 @@ const PreguntaPeso = () => {
 };
 
 const styles = StyleSheet.create({
-  fondo: { flex: 1, resizeMode: 'cover', justifyContent: 'center' },
-  contenedor: {
-    padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    margin: 20,
-    borderRadius: 15,
+  fondo: {
+    flex: 1,
+    justifyContent: 'center',
   },
-  botonAtras: { marginBottom: 10 },
-  textoAtras: { fontSize: 16, color: '#007AFF' },
+  contenedor: {
+    padding: moderateScale(20),
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    margin: moderateScale(20),
+    borderRadius: moderateScale(15),
+  },
+  botonAtras: {
+    marginBottom: verticalScale(10),
+  },
+  textoAtras: {
+    fontSize: moderateScale(16),
+    color: '#007AFF',
+  },
   pregunta: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
     fontWeight: 'bold',
   },
   input: {
     backgroundColor: '#fff',
-    padding: 10,
-    fontSize: 18,
-    borderRadius: 10,
+    padding: moderateScale(10),
+    fontSize: moderateScale(18),
+    borderRadius: moderateScale(10),
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
 });
 

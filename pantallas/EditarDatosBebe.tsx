@@ -22,6 +22,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { obtenerUIDUsuarioActual } from '../servicios/authService';
 import { obtenerDatosBebe, guardarDatoBebe } from '../servicios/firestoreService';
 
+// Importa las funciones de tu archivo responsive.ts
+import { scale, verticalScale, moderateScale } from '../utils/responsive';
+
 const EditarDatosBebe = () => {
   const navigation = useNavigation();
   const [datos, setDatos] = useState<any>({
@@ -227,7 +230,7 @@ const EditarDatosBebe = () => {
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
-    padding: 20,
+    padding: moderateScale(20),
   },
   row: {
     flexDirection: 'row',
@@ -236,53 +239,55 @@ const styles = StyleSheet.create({
   },
   fotoContainer: {
     width: '100%',
-    maxWidth: 250,
+    maxWidth: scale(250),
     alignItems: 'center',
-    marginRight: 20,
-    marginBottom: 20,
+    marginRight: scale(20),
+    marginBottom: verticalScale(20),
   },
   formulario: {
     flex: 1,
-    minWidth: 250,
+    minWidth: scale(250),
   },
   titulo: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
     textAlign: 'center',
     color: '#000',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 15,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(10),
+    marginBottom: verticalScale(15),
     backgroundColor: '#fff',
+    fontSize: moderateScale(14),
   },
   imagen: {
-    width: 200,
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 15,
+    width: scale(200),
+    height: verticalScale(200),
+    borderRadius: moderateScale(10),
+    marginBottom: verticalScale(15),
   },
   label: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '600',
-    marginBottom: 5,
+    marginBottom: verticalScale(5),
     color: '#000',
   },
   picker: {
     borderWidth: 1,
     borderColor: '#ccc',
-    marginBottom: 15,
+    marginBottom: verticalScale(15),
     backgroundColor: '#fff',
+    fontSize: moderateScale(14),
   },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 15,
+    marginVertical: verticalScale(15),
   },
 });
 

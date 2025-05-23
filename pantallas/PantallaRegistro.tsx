@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ImageBackground, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ImageBackground,
+  Alert,
+} from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
+
+import { scale, verticalScale, moderateScale } from '../utils/responsive';
 
 const esCorreoValido = (email: string) => {
   return /\S+@\S+\.\S+/.test(email);
@@ -71,7 +81,11 @@ export default function PantallaRegistro() {
   };
 
   return (
-    <ImageBackground source={require('../assets/fondo.jpg')} style={styles.fondo} resizeMode="cover">
+    <ImageBackground
+      source={require('../assets/fondo.jpg')}
+      style={styles.fondo}
+      resizeMode="cover"
+    >
       <View style={styles.contenedor}>
         <Text style={styles.titulo}>Registro</Text>
         <TextInput
@@ -97,11 +111,15 @@ export default function PantallaRegistro() {
           onChangeText={setConfirmarContrasena}
           secureTextEntry
         />
-        {mensajeError ? <Text style={styles.mensajeError}>{mensajeError}</Text> : null}
+        {mensajeError ? (
+          <Text style={styles.mensajeError}>{mensajeError}</Text>
+        ) : null}
         <TouchableOpacity style={styles.boton} onPress={registrarUsuario}>
           <Text style={styles.botonTexto}>Registrate</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('PantallaInicioSesion' as never)}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('PantallaInicioSesion' as never)}
+        >
           <Text style={styles.enlace}>¿Ya tienes cuenta? Inicia sesión</Text>
         </TouchableOpacity>
       </View>
@@ -110,49 +128,54 @@ export default function PantallaRegistro() {
 }
 
 const styles = StyleSheet.create({
-  fondo: { flex: 1, justifyContent: 'center' },
+  fondo: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   contenedor: {
     backgroundColor: 'rgba(255,255,255,0.85)',
-    margin: 20,
-    padding: 20,
-    borderRadius: 20,
+    margin: moderateScale(20),
+    padding: moderateScale(20),
+    borderRadius: moderateScale(20),
   },
   titulo: {
-    fontSize: 26,
+    fontSize: moderateScale(26),
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
     textAlign: 'center',
   },
   entrada: {
-    height: 45,
+    height: verticalScale(45),
     borderColor: '#ccc',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    marginBottom: verticalScale(12),
+    paddingHorizontal: moderateScale(10),
+    borderRadius: moderateScale(8),
     backgroundColor: '#fff',
   },
   mensajeError: {
     color: 'red',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
     textAlign: 'center',
     fontWeight: 'bold',
   },
   boton: {
     backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 10,
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(10),
+    marginTop: verticalScale(10),
   },
   botonTexto: {
     color: 'white',
     textAlign: 'center',
     fontWeight: 'bold',
+    fontSize: moderateScale(16),
   },
   enlace: {
     color: '#555',
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: verticalScale(10),
     textDecorationLine: 'underline',
+    fontSize: moderateScale(14),
   },
 });

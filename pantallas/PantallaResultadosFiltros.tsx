@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { obtenerActividades } from '../servicios/actividadesService';
+import { scale, verticalScale, moderateScale } from '../utils/responsive';
 
 const fondo = require('../assets/FondoResultadosFiltros.jpg');
 
@@ -25,14 +26,40 @@ const PantallaResultadosFiltros = () => {
 
       datos = datos.filter((actividad: any) => {
         const fecha = actividad.timestamp?.toDate?.() ?? new Date();
+
+        // Filtro por tipo
         const cumpleTipo = filtros.tipo
           ? Array.isArray(filtros.tipo)
             ? filtros.tipo.includes(actividad.tipo)
             : actividad.tipo === filtros.tipo
           : true;
+
+        // Filtro por fechas
         const cumpleDesde = filtros.desde ? fecha >= new Date(filtros.desde) : true;
         const cumpleHasta = filtros.hasta ? fecha <= new Date(filtros.hasta) : true;
-        return cumpleTipo && cumpleDesde && cumpleHasta;
+
+        // Filtro por comentario (si existe y se especificó)
+        let cumpleComentario = true;
+        if (filtros.comentario) {
+          const comentario = actividad.comentario ?? '';
+          const filtroComentarioLower = filtros.comentario.toLowerCase();
+          cumpleComentario = comentario.toLowerCase().includes(filtroComentarioLower);
+        }
+
+        // Filtro solo con comentarios
+        if (filtros.soloConComentario) {
+          const tieneComentario = actividad.comentario && actividad.comentario.trim() !== '';
+          cumpleComentario = cumpleComentario && tieneComentario;
+        }
+
+        // Filtro por duración (en milisegundos)
+        let cumpleDuracion = true;
+        if (filtros.minDuracion) {
+          const minDuracionMs = filtros.minDuracion * 60 * 1000; // Convertir minutos a ms
+          cumpleDuracion = actividad.duracion >= minDuracionMs;
+        }
+
+        return cumpleTipo && cumpleDesde && cumpleHasta && cumpleComentario && cumpleDuracion;
       });
 
       datos.sort((a, b) => (b.timestamp?.toDate?.() ?? 0) - (a.timestamp?.toDate?.() ?? 0));
@@ -41,6 +68,21 @@ const PantallaResultadosFiltros = () => {
 
     cargar();
   }, [filtros]);
+
+  // Función para formatear duración en h, m, s
+  const formatearDuracion = (milisegundos: number): string => {
+    const totalSegundos = Math.floor(milisegundos / 1000);
+    const horas = Math.floor(totalSegundos / 3600);
+    const minutos = Math.floor((totalSegundos % 3600) / 60);
+    const segundos = totalSegundos % 60;
+
+    const partes = [];
+    if (horas > 0) partes.push(`${horas}h`);
+    if (minutos > 0 || horas > 0) partes.push(`${minutos}m`);
+    partes.push(`${segundos}s`);
+
+    return partes.join(' ');
+  };
 
   return (
     <ImageBackground source={fondo} style={styles.fondo} resizeMode="cover">
@@ -54,12 +96,18 @@ const PantallaResultadosFiltros = () => {
         >
           {resultados.map((item) => {
             const fecha = item.timestamp?.toDate?.() ?? new Date();
+
+            const duracionDisplay = item.duracion
+              ? `⏱️ ${formatearDuracion(item.duracion)}`
+              : '';
+
             return (
               <View key={item.id} style={styles.item}>
-                <Text>
+                <Text style={styles.textoItem}>
                   {item.tipo} - {fecha.toLocaleDateString()} {fecha.toLocaleTimeString()}
                 </Text>
-                {item.comentario && <Text>💬 {item.comentario}</Text>}
+                {item.comentario && <Text style={styles.textoItem}>💬 {item.comentario}</Text>}
+                {item.duracion && <Text style={styles.textoItem}>{duracionDisplay}</Text>}
               </View>
             );
           })}
@@ -85,12 +133,13 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    padding: 20,
+    padding: scale(20),
   },
   titulo: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
+    textAlign: 'center',
   },
   scroll: {
     flex: 1,
@@ -100,26 +149,31 @@ const styles = StyleSheet.create({
     }),
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: verticalScale(40),
   },
   item: {
-    padding: 10,
+    padding: scale(10),
     borderBottomWidth: 1,
     borderColor: '#ccc',
     backgroundColor: 'rgba(255,255,255,0.6)',
-    borderRadius: 6,
-    marginBottom: 8,
+    borderRadius: moderateScale(6),
+    marginBottom: verticalScale(8),
+  },
+  textoItem: {
+    fontSize: moderateScale(14),
   },
   botonCerrar: {
     backgroundColor: '#007BFF',
-    padding: 12,
-    marginTop: 20,
-    borderRadius: 8,
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(20),
+    marginTop: verticalScale(20),
+    borderRadius: moderateScale(8),
     alignItems: 'center',
   },
   textoCerrar: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: moderateScale(16),
   },
 });
 

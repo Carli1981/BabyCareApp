@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { obtenerUIDUsuarioActual } from '../../servicios/authService';
 import { obtenerDatosBebe } from '../../servicios/firestoreService';
+import { scale, verticalScale, moderateScale } from '../../utils/responsive';
 
 const fondo = require('../../assets/FondoPantallaResumenDatos.jpg');
 
@@ -94,29 +95,29 @@ const styles = StyleSheet.create({
   },
   contenedor: {
     flexGrow: 1,
-    padding: 20,
+    padding: moderateScale(20),
     alignItems: 'center',
   },
   titulo: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
     textAlign: 'center',
   },
   texto: {
-    fontSize: 18,
-    marginVertical: 5,
+    fontSize: moderateScale(18),
+    marginVertical: verticalScale(5),
     color: '#333',
   },
   imagen: {
-    width: 200,
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 20,
+    width: scale(200),
+    height: verticalScale(200),
+    borderRadius: moderateScale(10),
+    marginBottom: verticalScale(20),
   },
   botonContainer: {
-    marginTop: 20,
-    width: '10%',
+    marginTop: verticalScale(20),
+    width: scale(150),
   },
 });
 
