@@ -19,7 +19,6 @@ import {
 } from '../servicios/actividadesService';
 import { useSueno } from '../contextos/contextoSueno';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import Cronometro from '../componentes/Cronometro';
 import { Timestamp } from 'firebase/firestore';
 
 const actividades = [
@@ -42,9 +41,6 @@ const PantallaActividades = () => {
   const [mlBiberon, setMlBiberon] = useState('');
   const [pechoActivo, setPechoActivo] = useState(false);
   const [inicioPecho, setInicioPecho] = useState<Date | null>(null);
-  const [contador, setContador] = useState(0);
-  const [tiempoActual, setTiempoActual] = useState(new Date());
-  const [tiempoActualPecho, setTiempoActualPecho] = useState(new Date());
   const { suenoActivo, iniciarSueno, finalizarSueno, horaInicioSueno } = useSueno();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -56,34 +52,6 @@ const PantallaActividades = () => {
   useEffect(() => {
     cargarActividades();
   }, [filtros]);
-
-  useEffect(() => {
-    let intervalo: any;
-    if (suenoActivo || pechoActivo) {
-      intervalo = setInterval(() => {
-        setContador((prev) => prev + 1); // fuerza re-render
-      }, 1000);
-    }
-    return () => clearInterval(intervalo);
-  }, [suenoActivo, pechoActivo]);
-
-  useEffect(() => {
-    if (suenoActivo) {
-      const intervalo = setInterval(() => {
-        setTiempoActual(new Date());
-      }, 1000);
-      return () => clearInterval(intervalo);
-    }
-  }, [suenoActivo]);
-
-  useEffect(() => {
-    if (pechoActivo) {
-      const intervalo = setInterval(() => {
-        setTiempoActualPecho(new Date());
-      }, 1000);
-      return () => clearInterval(intervalo);
-    }
-  }, [pechoActivo]);
 
   const cargarActividades = async () => {
     let datos = await obtenerActividades();
@@ -200,18 +168,6 @@ const PantallaActividades = () => {
     return grupos;
   };
 
-  const formatearDuracionTotal = () => {
-    if (!horaInicioSueno) return '00:00:00';
-    const duracionMs = tiempoActual.getTime() - new Date(horaInicioSueno).getTime();
-    return duracionMs < 0 || isNaN(duracionMs) ? '00:00:00' : formatearDuracion(duracionMs);
-  };
-
-  const formatearDuracionPecho = () => {
-    if (!inicioPecho) return '00:00:00';
-    const duracionMs = tiempoActualPecho.getTime() - inicioPecho.getTime();
-    return duracionMs < 0 || isNaN(duracionMs) ? '00:00:00' : formatearDuracion(duracionMs);
-  };
-
   const confirmarBiberon = async () => {
     if (!mlBiberon || isNaN(Number(mlBiberon))) {
       alert('Por favor, ingresa una cantidad válida de ml.');
@@ -281,8 +237,6 @@ const PantallaActividades = () => {
   return (
     <ImageBackground source={require('../assets/FondoPantallaActividades.jpg')} style={styles.fondo} resizeMode="cover">
       <View style={styles.contenedorPrincipal}>
-        {/* Para forzar re-render */}
-        <Text style={{ display: 'none' }}>{contador}</Text>
         {/* Barra lateral izquierda */}
         <View style={styles.barraIzquierda}>
           {/* Aquí dividimos en dos columnas */}
@@ -290,8 +244,15 @@ const PantallaActividades = () => {
             {/* Primera columna */}
             <View style={styles.columna}>
               {actividades.slice(0, Math.ceil(actividades.length / 2)).map((act, idx) => (
-                <TouchableOpacity key={idx} style={styles.botonActividadColumna} onPress={() => manejarActividad(act.tipo)}>
-                  <View style={styles.iconoContainer}>
+                <TouchableOpacity 
+                  key={idx} 
+                  style={styles.botonActividadColumna} 
+                  onPress={() => manejarActividad(act.tipo)}
+                >
+                  <View style={[
+                    styles.iconoContainer,
+                    act.tipo === 'Dar pecho' && pechoActivo && { backgroundColor: '#28a745' }
+                  ]}>
                     <MaterialCommunityIcons name={act.icono as any} size={30} color="#fff" />
                   </View>
                   <Text style={styles.etiquetaIcono}>{act.tipo}</Text>
@@ -301,8 +262,15 @@ const PantallaActividades = () => {
             {/* Segunda columna */}
             <View style={styles.columna}>
               {actividades.slice(Math.ceil(actividades.length / 2)).map((act, idx) => (
-                <TouchableOpacity key={idx} style={styles.botonActividadColumna} onPress={() => manejarActividad(act.tipo)}>
-                  <View style={styles.iconoContainer}>
+                <TouchableOpacity 
+                  key={idx} 
+                  style={styles.botonActividadColumna} 
+                  onPress={() => manejarActividad(act.tipo)}
+                >
+                  <View style={[
+                    styles.iconoContainer,
+                    act.tipo === 'Dar pecho' && pechoActivo && { backgroundColor: '#28a745' }
+                  ]}>
                     <MaterialCommunityIcons name={act.icono as any} size={30} color="#fff" />
                   </View>
                   <Text style={styles.etiquetaIcono}>{act.tipo}</Text>
@@ -312,7 +280,10 @@ const PantallaActividades = () => {
           </View>
           {/* Botón Sueño */}
           <TouchableOpacity style={[styles.botonActividadColumna, { marginTop: 30 }]} onPress={() => suenoActivo ? finalizarSueno(cargarActividades) : iniciarSueno()}>
-            <View style={[styles.iconoContainer, { backgroundColor: '#7952B3' }]}>
+            <View style={[
+              styles.iconoContainer, 
+              { backgroundColor: suenoActivo ? '#28a745' : '#7952B3' }
+            ]}>
               <MaterialCommunityIcons name="bed-outline" size={30} color="#fff" />
             </View>
             <Text style={styles.etiquetaIcono}>Sueño</Text>
@@ -328,20 +299,12 @@ const PantallaActividades = () => {
 
         {/* Sección registros */}
         <View style={styles.columnaRegistros}>
+          {/* Mensajes de acciones activas */}
           {suenoActivo && (
-            <Cronometro
-              inicio={horaInicioSueno}
-              icono="🛌"
-              texto="Durmiendo desde:"
-            />
+            <Text style={styles.accionActiva}>🛌 Acción activa: Durmiendo</Text>
           )}
           {pechoActivo && (
-            <Cronometro
-              inicio={inicioPecho}
-              icono="🍼"
-              texto="Dando pecho:"
-              estilo={{ color: '#28a745' }}
-            />
+            <Text style={[styles.accionActiva, { color: '#28a745' }]}>🍼 Acción activa: Dando pecho</Text>
           )}
 
           {/* Scroll en registros con más espacio */}
@@ -367,8 +330,6 @@ const PantallaActividades = () => {
         </View>
       </View>
 
-      {/* Modales (igual que antes) */}
-      {/* ... (mantener igual, no se repite aquí para ahorrar espacio) */}
       {/* Modal comentarios */}
       <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalFondo}>
@@ -417,7 +378,6 @@ const PantallaActividades = () => {
   );
 };
 
-// Estilos (igual que antes)
 const styles = StyleSheet.create({
   fondo: { flex: 1 },
   contenedorPrincipal: { flex: 1, flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.9)' },
@@ -478,7 +438,16 @@ const styles = StyleSheet.create({
   textoRegistro: { fontSize: 14 },
   textoComentario: { fontStyle: 'italic', color: '#555', marginTop: 4 },
   seccionTitulo: { fontSize: 17, fontWeight: 'bold', marginVertical: 10, backgroundColor: '#e8f0fe', padding: 6, borderRadius: 6 },
-  cronometro: { fontSize: 16, fontWeight: 'bold', marginBottom: 10, color: '#007BFF' },
+  accionActiva: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    marginBottom: 10, 
+    color: '#007BFF',
+    backgroundColor: '#e8f0fe',
+    padding: 8,
+    borderRadius: 6,
+    textAlign: 'center'
+  },
   modalFondo: { flex: 1, backgroundColor: '#000000aa', justifyContent: 'center', paddingHorizontal: 20 },
   modalContenido: { backgroundColor: 'white', padding: 20, borderRadius: 10 },
   subtitulo: { fontSize: 18, marginBottom: 15, fontWeight: 'bold' },
